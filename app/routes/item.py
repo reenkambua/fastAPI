@@ -4,7 +4,7 @@ from app.schema.item import ItemCreate, ItemResponse
 router = APIRouter(prefix="/items", tags=["Items"])
 
 items_db = []
-item_id_counter = 1  # ✅ fixed name
+item_id_counter = 1  
 
 @router.get("/", response_model=list[ItemResponse])
 def get_items():
@@ -12,7 +12,7 @@ def get_items():
 
 @router.post("/", response_model=ItemResponse)
 def create_item(item: ItemCreate):
-    global item_id_counter  # ✅ match the variable name
+    global item_id_counter  
     item_data = item.dict()
     item_data["id"] = item_id_counter
     item_id_counter += 1

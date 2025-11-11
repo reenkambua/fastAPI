@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 
-# ItemBase → shared fields
+
 
 class ItemBase(BaseModel):
     name: str
@@ -9,10 +9,10 @@ class ItemBase(BaseModel):
     description: Optional[str] = None
 
 class ItemCreate(ItemBase):
-    pass  # For future use, e.g., additional validations
+    pass 
 
 class ItemResponse(ItemBase):
-    id: int  # We'll use this when we have DB entries
+    id: int  
 
     class Config:
-        orm_mode = True  # Required to read SQLAlchemy models
+        orm_mode = True  

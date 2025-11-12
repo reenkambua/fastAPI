@@ -76,6 +76,35 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/items/filter?keyword=tablet",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"items",
+						"filter"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": "",
+							"disabled": true
+						},
+						{
+							"key": "keyword",
+							"value": "tablet"
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }

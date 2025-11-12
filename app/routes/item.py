@@ -1,59 +1,60 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+from app.database import SessionLocal
+from app.models.item import Item
 from app.schema.item import ItemCreate, ItemResponse
-import requests
 
 router = APIRouter(prefix="/items", tags=["Items"])
 
-items_db = []
-item_id_counter = 1  
-
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 @router.get("/", response_model=list[ItemResponse])
-def get_items():
-    return items_db
-
+def get_items(db: Session = Depends(get_db)):
+    return db.query(Item).all()
 
 @router.post("/", response_model=ItemResponse)
-def create_item(item: ItemCreate):
-    global item_id_counter  
-    item_data = item.dict()
-    item_data["id"] = item_id_counter
-    item_id_counter += 1
-    items_db.append(item_data)
-    return item_data
-
+def create_item(item: ItemCreate, db: Session = Depends(get_db)):
+    db_item = Item(**item.dict())
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
 
 @router.patch("/{item_id}", response_model=ItemResponse)
-def update_item(item_id: int, item: ItemCreate):
-    for db_item in items_db:
-        if db_item["id"] == item_id:
-            db_item.update(item.dict(exclude_unset=True))
-            return db_item
-    raise HTTPException(status_code=404, detail="Item not found")
-
+def update_item(item_id: int, item: ItemCreate, db: Session = Depends(get_db)):
+    db_item = db.query(Item).filter(Item.id == item_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    for key, value in item.dict(exclude_unset=True).items():
+        setattr(db_item, key, value)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
 
 @router.delete("/{item_id}")
-def delete_item(item_id: int):
-    for index, db_item in enumerate(items_db):
-        if db_item["id"] == item_id:
-            items_db.pop(index)
-            return {"message": f"Item {item_id} deleted successfully"}
-    raise HTTPException(status_code=404, detail="Item not found")
-
+def delete_item(item_id: int, db: Session = Depends(get_db)):
+    db_item = db.query(Item).filter(Item.id == item_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    db.delete(db_item)
+    db.commit()
+    return {"message": f"Item {item_id} deleted successfully"}
 
 @router.get("/filter", response_model=list[ItemResponse])
-def filter_items(max_price: float | None = None, keyword: str | None = None):
-    filtered = items_db
-
-   
+def filter_items(max_price: float | None = None, keyword: str | None = None, db: Session = Depends(get_db)):
+    query = db.query(Item)
     if max_price is not None:
-        filtered = [item for item in filtered if item["price"] <= max_price]
+        query = query.filter(Item.price <= max_price)
     if keyword:
-        keyword = keyword.lower()
-        filtered = [
-            item for item in filtered
-            if keyword in item["name"].lower() or keyword in item["description"].lower()
-        ]
-
+        keyword = f"%{keyword.lower()}%"
+        query = query.filter(
+            (Item.name.ilike(keyword)) | (Item.description.ilike(keyword))
+        )
+    filtered = query.all()
     print("Filtered results:", filtered)
     return filtered

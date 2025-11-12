@@ -1,0 +1,11 @@
+
+*.py[cod]
+*$py.class
+
+.env
+
+*.db
+.vscode/
+.idea/
+
+*.log

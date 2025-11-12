@@ -1,18 +1,12 @@
 from pydantic import BaseModel
-from typing import Optional
 
-
-
-class ItemBase(BaseModel):
+class ItemCreate(BaseModel):
     name: str
     price: float
-    description: Optional[str] = None
+    description: str
 
-class ItemCreate(ItemBase):
-    pass 
-
-class ItemResponse(ItemBase):
-    id: int  
+class ItemResponse(ItemCreate):
+    id: int
 
     class Config:
-        orm_mode = True  
+        orm_mode = True
